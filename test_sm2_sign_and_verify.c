@@ -12,13 +12,26 @@
 #include "sm2_create_key_pair.h"
 #include "sm2_sign_and_verify.h"
 #include "test_sm2_sign_and_verify.h"
+#include <time.h>
+#include <sys/time.h>
+
+const static int count = 10000;
+
+long getCurrentTime()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
 
 /*********************************************************/
 int test_with_input_defined_in_standard(void)
 {
 	int error_code;
-	unsigned char msg[] = {"message digest"};
-	unsigned int msg_len = (unsigned int)(strlen((char *)msg));
+	//unsigned char msg[] = {"message digest"};
+	unsigned char msg[32];
+	memset(msg,'0',sizeof(msg));
+	unsigned int msg_len = (unsigned int)(sizeof(msg));
 	unsigned char user_id[] = {"1234567812345678"};
 	unsigned int user_id_len = (unsigned int)(strlen((char *)user_id));
 	unsigned char pub_key[65] = {0x04, 0x09, 0xf9, 0xdf, 0x31, 0x1e, 0x54, 0x21, 0xa1,
@@ -34,6 +47,7 @@ int test_with_input_defined_in_standard(void)
 	                             0x88, 0x93, 0x93, 0x69, 0x28, 0x60, 0xb5, 0x1a,
 	                             0x42 ,0xfb, 0x81, 0xef, 0x4d, 0xf7, 0xc5, 0xb8};
 	SM2_SIGNATURE_STRUCT sm2_sig;
+	SM2_SIGNATURE_STRUCT sigs[count];
 	unsigned char std_r[32] = {0xf5, 0xa0, 0x3b, 0x06, 0x48, 0xd2, 0xc4 ,0x63,
 		                   0x0e, 0xea, 0xc5, 0x13, 0xe1, 0xbb, 0x81, 0xa1,
 				   0x59, 0x44, 0xda, 0x38, 0x27, 0xd5, 0xb7, 0x41,
@@ -42,56 +56,113 @@ int test_with_input_defined_in_standard(void)
 		                   0x76, 0x31, 0x82, 0xbc, 0x0d, 0x42, 0x1c, 0xa1,
 				   0xbb, 0x90, 0x38, 0xfd, 0x1f, 0x7f, 0x42, 0xd4,
 				   0x84, 0x0b, 0x69, 0xc4, 0x85, 0xbb, 0xc1, 0xaa};
-	int i;
+	int i,j;
 
-	if ( error_code = sm2_sign_data_test(msg,
+	long now = getCurrentTime();
+	printf("**** start signature start time %ld \n", now);
+
+
+	for (j=0;j<count;j++) {
+		if ( error_code = sm2_sign_data_test(msg,
 		                             msg_len,
 					     user_id,
 					     user_id_len,
 					     pub_key,
 					     pri_key,
-					     &sm2_sig) )
-	{
-	   printf("Create SM2 signature by using input defined in standard failed!\n");
-	   return error_code;
+					     &sigs[j]) )
+		{
+		printf("Create SM2 signature by using input defined in standard failed!\n");
+		return error_code;
+		}
+		msg[0] +=1;
+
+		// for (i = 0; i < sizeof(sm2_sig.r_coordinate); i++)
+		// {
+		// 	printf("0x%x  ", sm2_sig.r_coordinate[i]);
+		// }
+		// printf("\n");
+		// printf("s coordinate:\n");
+		// for (i = 0; i < sizeof(sm2_sig.s_coordinate); i++)
+		// {
+		// 	printf("0x%x  ", sm2_sig.s_coordinate[i]);
+		// }
+		// printf("\n\n");
 	}
 
-	if ( memcmp(sm2_sig.r_coordinate, std_r, sizeof(std_r)) )
-	{
-	   printf("r coordinate of SM2 signature is invalid!\n");
-	   return (-1);
-	}
-	if ( memcmp(sm2_sig.s_coordinate, std_s, sizeof(std_s)) )
-	{
-	   printf("s coordinate of SM2 signature is invalid!\n");
-	   return (-1);
-	}
+	long now2 = getCurrentTime();
+	printf("**** start signature elapsed %ld\n", now2 - now);
 
-	printf("Create SM2 signature by using input defined in standard succeeded!\n");
-	printf("SM2 signature:\n");
-	printf("r coordinate:\n");
-	for (i = 0; i < sizeof(sm2_sig.r_coordinate); i++)
-	{
-	   printf("0x%x  ", sm2_sig.r_coordinate[i]);
-	}
-	printf("\n");
-	printf("s coordinate:\n");
-	for (i = 0; i < sizeof(sm2_sig.s_coordinate); i++)
-	{
-	   printf("0x%x  ", sm2_sig.s_coordinate[i]);
-	}
-	printf("\n\n");
+	// if ( error_code = sm2_sign_data_test(msg,
+	// 	                             msg_len,
+	// 				     user_id,
+	// 				     user_id_len,
+	// 				     pub_key,
+	// 				     pri_key,
+	// 				     &sm2_sig) )
+	// {
+	//    printf("Create SM2 signature by using input defined in standard failed!\n");
+	//    return error_code;
+	// }
 
-	if ( error_code = sm2_verify_sig(msg,
+	// if ( memcmp(sm2_sig.r_coordinate, std_r, sizeof(std_r)) )
+	// {
+	//    printf("r coordinate of SM2 signature is invalid!\n");
+	//    return (-1);
+	// }
+	// if ( memcmp(sm2_sig.s_coordinate, std_s, sizeof(std_s)) )
+	// {
+	//    printf("s coordinate of SM2 signature is invalid!\n");
+	//    return (-1);
+	// }
+
+	// printf("Create SM2 signature by using input defined in standard succeeded!\n");
+	// printf("SM2 signature:\n");
+	// printf("r coordinate:\n");
+	// for (i = 0; i < sizeof(sm2_sig.r_coordinate); i++)
+	// {
+	//    printf("0x%x  ", sm2_sig.r_coordinate[i]);
+	// }
+	// printf("\n");
+	// printf("s coordinate:\n");
+	// for (i = 0; i < sizeof(sm2_sig.s_coordinate); i++)
+	// {
+	//    printf("0x%x  ", sm2_sig.s_coordinate[i]);
+	// }
+	// printf("\n\n");
+
+	memset(msg,'0',sizeof(msg));
+	now = getCurrentTime();
+	printf("**** start verify time %ld \n", now);
+	for (j = 0;j<count;j++) {
+		// for (i = 0; i < sizeof(sigs[j].r_coordinate); i++)
+		// {
+		// 	printf("0x%x  ", sigs[j].r_coordinate[i]);
+		// }
+		// printf("\n");
+		// printf("s coordinate:\n");
+		// for (i = 0; i < sizeof(sigs[j].s_coordinate); i++)
+		// {
+		// 	printf("0x%x  ", sigs[j].s_coordinate[i]);
+		// }
+		// printf("\n\n");
+
+
+		if ( error_code = sm2_verify_sig(msg,
 		                         msg_len,
 					 user_id,
 					 user_id_len,
 					 pub_key,
-					 &sm2_sig) )
-	{
-	   printf("Verify SM2 signature created by using input defined in standard failed!\n");
-	   return error_code;
+					 &sigs[j]) )
+		{
+		printf("Verify SM2 signature created by using input defined in standard failed!\n");
+		return error_code;
+		}
+		msg[0] +=1;
 	}
+	now2 = getCurrentTime();
+	printf("**** verify signature elapsed %ld\n", now2 - now);
+
+	
 	printf("Verify SM2 signature created by using input defined in standard succeeded!\n");
 
 	return 0;
@@ -101,13 +172,15 @@ int test_with_input_defined_in_standard(void)
 int test_sm2_sign_and_verify(void)
 {
 	int error_code;
-	unsigned char msg[] = {"message digest"};
-	unsigned int msg_len = (unsigned int)(strlen((char *)msg));
+	unsigned char msg[32];
+	unsigned int msg_len = (unsigned int)(sizeof(msg));
+	memset(msg,'0',sizeof(msg));
 	unsigned char user_id[] = {"1234567812345678"};
 	unsigned int user_id_len = (unsigned int)(strlen((char *)user_id));
 	SM2_KEY_PAIR key_pair;
 	SM2_SIGNATURE_STRUCT sm2_sig;
-	int i;
+	SM2_SIGNATURE_STRUCT sigs[count];
+	int i,j;
 
 	if ( error_code = sm2_create_key_pair(&key_pair) )
 	{
@@ -115,56 +188,72 @@ int test_sm2_sign_and_verify(void)
 	   return (-1);
 	}
 	printf("Create SM2 key pair succeeded!\n");
-	printf("Private key:\n");
-	for (i = 0; i < sizeof(key_pair.pri_key); i++)
-	{
-	   printf("0x%x  ", key_pair.pri_key[i]);
-	}
-	printf("\n\n");
-	printf("Public key:\n");
-	for (i = 0; i < sizeof(key_pair.pub_key); i++)
-	{
-	   printf("0x%x  ", key_pair.pub_key[i]);
-	}
-	printf("\n\n");
+	// printf("Private key:\n");
+	// for (i = 0; i < sizeof(key_pair.pri_key); i++)
+	// {
+	//    printf("0x%x  ", key_pair.pri_key[i]);
+	// }
+	// printf("\n\n");
+	// printf("Public key:\n");
+	// for (i = 0; i < sizeof(key_pair.pub_key); i++)
+	// {
+	//    printf("0x%x  ", key_pair.pub_key[i]);
+	// }
+	// printf("\n\n");
 
 	printf("/*********************************************************/\n");
-	if ( error_code = sm2_sign_data(msg,
+	long now = getCurrentTime();
+	printf("**** start signature start time %ld \n", now);
+	for(j = 0;j<count;j++) {
+		if ( error_code = sm2_sign_data(msg,
 		                        msg_len,
 					user_id,
 					user_id_len,
 					key_pair.pub_key,
 					key_pair.pri_key,
-					&sm2_sig) )
-	{
-	   printf("Create SM2 signature failed!\n");
-	   return error_code;
+					&sigs[j]) )
+		{
+		printf("Create SM2 signature failed!\n");
+		return error_code;
+		}
+		msg[0] +=1;
 	}
-	printf("Create SM2 signature succeeded!\n");
-	printf("SM2 signature:\n");
-	printf("r coordinate:\n");
-	for (i = 0; i < sizeof(sm2_sig.r_coordinate); i++)
-	{
-	   printf("0x%x  ", sm2_sig.r_coordinate[i]);
+	long now2 = getCurrentTime();
+	printf("**** start signature elapsed %ld\n", now2 - now);
+	
+	// printf("Create SM2 signature succeeded!\n");
+	// printf("SM2 signature:\n");
+	// printf("r coordinate:\n");
+	// for (i = 0; i < sizeof(sm2_sig.r_coordinate); i++)
+	// {
+	//    printf("0x%x  ", sm2_sig.r_coordinate[i]);
+	// }
+	// printf("\n");
+	// printf("s coordinate:\n");
+	// for (i = 0; i < sizeof(sm2_sig.s_coordinate); i++)
+	// {
+	//    printf("0x%x  ", sm2_sig.s_coordinate[i]);
+	// }
+	// printf("\n\n");
+	memset(msg,'0',sizeof(msg));
+	now = getCurrentTime();
+	printf("**** start verify start time %ld \n", now);
+	for(j = 0;j<count;j++) {
+		if ( error_code = sm2_verify_sig(msg,
+									msg_len,
+						user_id,
+						user_id_len,
+						key_pair.pub_key,
+						&sigs[j]) )
+		{
+		printf("Verify SM2 signature failed!\n");
+		return error_code;
+		}
+		msg[0] +=1;
 	}
-	printf("\n");
-	printf("s coordinate:\n");
-	for (i = 0; i < sizeof(sm2_sig.s_coordinate); i++)
-	{
-	   printf("0x%x  ", sm2_sig.s_coordinate[i]);
-	}
-	printf("\n\n");
+	now2 = getCurrentTime();
+	printf("**** verify  elapsed %ld\n", now2 -now);
 
-	if ( error_code = sm2_verify_sig(msg,
-		                         msg_len,
-					 user_id,
-					 user_id_len,
-					 key_pair.pub_key,
-					 &sm2_sig) )
-	{
-	   printf("Verify SM2 signature failed!\n");
-	   return error_code;
-	}
 	printf("Verify SM2 signature succeeded!\n");
 
 	return 0;

@@ -1,3 +1,7 @@
+# Simple compile gcc -O2  sm2_sign_and_verify.c sm3_with_preprocess.c sm2_create_key_pair.c test_sm2_sign_and_verify.c test_demo.c  -ldl -lssl -lcrypto
+
+need openssl libary
+
 # SM2-signature-creation-and-verification
 &ensp;&ensp;&ensp;&ensp;An implementation of SM2 signature creation and verification is provided. Header files and library files of OpenSSL 1.1.1 or higher version are needed while compiling and linking. OpenSSL website is: https://www.openssl.org
 
